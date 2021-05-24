@@ -39,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
           Adding a WebView in onCreate()
          */
         webView = new WebView(this);
+
         setContentView(webView);
         /*
           Load the page with:
@@ -50,6 +51,9 @@ public class MainActivity extends AppCompatActivity {
          */
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            settings.setSafeBrowsingEnabled(false);
+        }
 //        settings.setSupportMultipleWindows(true);
 
         /*
