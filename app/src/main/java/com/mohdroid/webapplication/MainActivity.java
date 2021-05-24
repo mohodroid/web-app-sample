@@ -2,6 +2,7 @@ package com.mohdroid.webapplication;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.webkit.WebViewCompat;
+import androidx.webkit.WebViewFeature;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -16,6 +17,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.webkit.ConsoleMessage;
 import android.webkit.JavascriptInterface;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
@@ -26,6 +28,7 @@ import android.widget.Toast;
 public class MainActivity extends AppCompatActivity {
 
     WebView webView;
+    private boolean safeBrowsingIsInitialized;
 
     static final String TAG = "WebApp";
 
@@ -35,16 +38,33 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         PackageInfo webViewPackageInfo = WebViewCompat.getCurrentWebViewPackage(this);
         Log.d(TAG, "WebView version: " + webViewPackageInfo.versionName);
-        /*
-          Adding a WebView in onCreate()
-         */
         webView = new WebView(this);
-
         setContentView(webView);
+
+        /*
+            Full control over links user click.
+            when override this, webView automatically accumulates a history of visited web pages.
+         */
+        webView.setWebViewClient(new MyWebViewClient(this));
+        safeBrowsingIsInitialized = false;
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.START_SAFE_BROWSING)) {
+            WebViewCompat.startSafeBrowsing(this, new ValueCallback<Boolean>() {
+                @Override
+                public void onReceiveValue(Boolean success) {
+                    //when safe browsing init correctly success= true else false
+                    safeBrowsingIsInitialized = true;
+                    if (!success) {
+                        Log.d(TAG, "Unable to initialize Safe Browsing!");
+                    }
+                }
+            });
+        }
         /*
           Load the page with:
+          its better wait until safeBrowsingIsInitialized = true before loading url
          */
         webView.loadUrl("https://www.jazzradio.com");
+
         /*
             JS code is disabled by default in webView
             should enable with webSettings
@@ -52,7 +72,8 @@ public class MainActivity extends AppCompatActivity {
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            settings.setSafeBrowsingEnabled(false);
+            settings.setSafeBrowsingEnabled(true);
+
         }
 //        settings.setSupportMultipleWindows(true);
 
@@ -67,11 +88,6 @@ public class MainActivity extends AppCompatActivity {
          */
         webView.addJavascriptInterface(new MyWebInterface(this), "Android");
 
-        /*
-            Full control over links user click.
-            when override this, webView automatically accumulates a history of visited web pages.
-         */
-        webView.setWebViewClient(new MyWebViewClient(this));
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
