@@ -8,6 +8,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Message;
@@ -31,14 +32,34 @@ public class MainActivity extends AppCompatActivity {
     private boolean safeBrowsingIsInitialized;
 
     static final String TAG = "WebApp";
+    final String DEFAULT_URL = "https://www.jazzradio.com";
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Intent intent = getIntent();
+        String action = intent.getAction();
+        Uri data = intent.getData();
+        String url;
+        if (data != null) {
+            Log.d(TAG, data.toString());
+            if (data.getHost().equals("popular")) url = "https://www.jazzradio.com";
+            else if (data.getHost().equals("apps")) url = "https://www.jazzradio.com/apps";
+            else url = DEFAULT_URL;
+        } else url = DEFAULT_URL;
         PackageInfo webViewPackageInfo = WebViewCompat.getCurrentWebViewPackage(this);
         Log.d(TAG, "WebView version: " + webViewPackageInfo.versionName);
         webView = new WebView(this);
+        /*
+            The renderer's priority is the same as (or "is bound to") the default priority for the app.
+            The true argument decreases the renderer's priority to RENDERER_PRIORITY_WAIVED when the associated WebView object is no longer visible
+            In other words, a true argument indicates that your app doesn't care whether the system keeps the renderer process alive.
+            In fact, this lower priority level makes it likely that the renderer process is killed in out-of-memory situations.
+         */
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            webView.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_BOUND, true);
+        }
         setContentView(webView);
 
         /*
@@ -62,8 +83,9 @@ public class MainActivity extends AppCompatActivity {
         /*
           Load the page with:
           its better wait until safeBrowsingIsInitialized = true before loading url
+          TODO("refactor to check safe browsing before load url")
          */
-        webView.loadUrl("https://www.jazzradio.com");
+        webView.loadUrl(url);
 
         /*
             JS code is disabled by default in webView
