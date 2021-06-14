@@ -15,7 +15,8 @@ public class MyWebInterface {
      * Show a toast from the web page
      */
     @JavascriptInterface
-    public void showToast(String toast) {
-        Toast.makeText(context, toast, Toast.LENGTH_SHORT).show();
+    public void showToast(String message) {
+        Toast.makeText(context, "Message from js" + message, Toast.LENGTH_SHORT).show();
     }
+
 }

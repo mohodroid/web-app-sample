@@ -24,6 +24,7 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
@@ -32,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean safeBrowsingIsInitialized;
 
     static final String TAG = "WebApp";
-    final String DEFAULT_URL = "https://www.jazzradio.com";
+    final String DEFAULT_URL = "file:///android_asset/page.html";
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -50,17 +51,19 @@ public class MainActivity extends AppCompatActivity {
         } else url = DEFAULT_URL;
         PackageInfo webViewPackageInfo = WebViewCompat.getCurrentWebViewPackage(this);
         Log.d(TAG, "WebView version: " + webViewPackageInfo.versionName);
-        webView = new WebView(this);
+//        webView = new WebView(this);
         /*
             The renderer's priority is the same as (or "is bound to") the default priority for the app.
             The true argument decreases the renderer's priority to RENDERER_PRIORITY_WAIVED when the associated WebView object is no longer visible
             In other words, a true argument indicates that your app doesn't care whether the system keeps the renderer process alive.
             In fact, this lower priority level makes it likely that the renderer process is killed in out-of-memory situations.
          */
+        setContentView(R.layout.activity_main);
+        webView = findViewById(R.id.webView);
+        Button button = findViewById(R.id.btnJavaCallJs);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             webView.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_BOUND, true);
         }
-        setContentView(webView);
 
         /*
             Full control over links user click.
@@ -92,6 +95,7 @@ public class MainActivity extends AppCompatActivity {
             should enable with webSettings
          */
         WebSettings settings = webView.getSettings();
+        settings.setDomStorageEnabled(true);
         settings.setJavaScriptEnabled(true);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             settings.setSafeBrowsingEnabled(true);
@@ -108,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             </script>
          */
-        webView.addJavascriptInterface(new MyWebInterface(this), "Android");
+        webView.addJavascriptInterface(new MyWebInterface(this), "MyWebInterface");
 
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
@@ -160,5 +164,9 @@ public class MainActivity extends AppCompatActivity {
                         // Hide the nav bar and status bar
                         | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                         | View.SYSTEM_UI_FLAG_FULLSCREEN);
+    }
+
+    public void onclick(View view) {
+        webView.loadUrl("javascript:javaCallJs(" + "'Message From Java'" + ")");
     }
 }
