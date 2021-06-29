@@ -1,31 +1,34 @@
 package com.mohdroid.webapplication;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.webkit.WebViewCompat;
-import androidx.webkit.WebViewFeature;
-
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Message;
 import android.util.Base64;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.webkit.ConsoleMessage;
-import android.webkit.JavascriptInterface;
+import android.webkit.GeolocationPermissions;
+import android.webkit.PermissionRequest;
 import android.webkit.ValueCallback;
-import android.webkit.WebChromeClient;
-import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.widget.Button;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.webkit.WebViewCompat;
+import androidx.webkit.WebViewFeature;
+
+import io.sentry.Sentry;
+
+import static com.mohdroid.webapplication.Permissions.PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION;
+import static com.mohdroid.webapplication.Permissions.PERMISSIONS_REQUEST_CAMERA;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -34,6 +37,9 @@ public class MainActivity extends AppCompatActivity {
 
     static final String TAG = "WebApp";
     final String DEFAULT_URL = "file:///android_asset/page.html";
+     String mGeoLocationRequestOrigin = null;
+    GeolocationPermissions.Callback mGeoLocationCallback = null;
+    private PermissionRequest mRequest;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -60,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
          */
         setContentView(R.layout.activity_main);
         webView = findViewById(R.id.webView);
-        Button button = findViewById(R.id.btnJavaCallJs);
+//        Button button = findViewById(R.id.btnJavaCallJs);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             webView.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_BOUND, true);
         }
@@ -97,10 +103,59 @@ public class MainActivity extends AppCompatActivity {
         WebSettings settings = webView.getSettings();
         settings.setDomStorageEnabled(true);
         settings.setJavaScriptEnabled(true);
+        settings.setGeolocationEnabled(true);
+        settings.setMediaPlaybackRequiresUserGesture(false);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             settings.setSafeBrowsingEnabled(true);
-
         }
+        webView.setWebChromeClient(new android.webkit.WebChromeClient() {
+            @Override
+            public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+                Log.d(TAG, "onGeolocationPermissionsShowPrompt()");
+                callback.invoke(origin, true, false);
+                //get Permission
+                Permissions permissions = new Permissions(MainActivity.this);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    int i = permissions.readGeoLocationPermission();
+                    if (i == 1)
+                        callback.invoke(origin, true, true);
+                    else {
+                        mGeoLocationCallback = callback;
+                        mGeoLocationRequestOrigin = origin;
+                    }
+                }
+            }
+
+            @Override
+            public void onPermissionRequest(PermissionRequest request) {
+                Log.d(TAG, "onPermissionRequest()");
+                //get Permission
+                Permissions permissions = new Permissions(MainActivity.this);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    int i = permissions.readCameraPermission();
+                    if (i == 1)
+                        request.grant(request.getResources());
+                    else {
+                        mRequest = request;
+                    }
+                }
+
+
+            }
+            @RequiresApi(api = Build.VERSION_CODES.M)
+            @Override
+            public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+                String message = consoleMessage.message() + " -- From line " +
+                        consoleMessage.lineNumber() + " of " + consoleMessage.sourceId();
+                Log.d(TAG, message);
+                if (message.equals("ERROR TypeError: Cannot read property 'query' of undefined -- From line 1 of https://tourismbank.dashtclub.ir/main-es2015.aff395c7aa88521d32e8.js")) {
+                    Permissions permission = new Permissions(MainActivity.this);
+                    permission.readCameraPermission();
+                }
+                return true;
+
+            }
+        });
 //        settings.setSupportMultipleWindows(true);
 
         /*
@@ -114,17 +169,8 @@ public class MainActivity extends AppCompatActivity {
          */
         webView.addJavascriptInterface(new MyWebInterface(this), "MyWebInterface");
 
-        webView.setWebChromeClient(new WebChromeClient() {
-            @Override
-            public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
-                Log.d(TAG, consoleMessage.message() + " -- From line " +
-                        consoleMessage.lineNumber() + " of " + consoleMessage.sourceId());
-                return true;
-
-            }
-        });
-
     }
+
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -162,11 +208,33 @@ public class MainActivity extends AppCompatActivity {
                         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                         // Hide the nav bar and status bar
-                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+
                         | View.SYSTEM_UI_FLAG_FULLSCREEN);
     }
 
     public void onclick(View view) {
         webView.loadUrl("javascript:javaCallJs(" + "'Message From Java'" + ")");
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSIONS_REQUEST_CAMERA) {
+            if (grantResults.length != 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "camera permission granted", Toast.LENGTH_LONG).show();
+                mRequest.grant(mRequest.getResources());
+            } else {
+                Toast.makeText(this, "camera permission denied", Toast.LENGTH_LONG).show();
+                mRequest.deny();
+            }
+        } else if (requestCode == PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION) {
+            if (grantResults.length != 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Location permission granted", Toast.LENGTH_LONG).show();
+                mGeoLocationCallback.invoke(mGeoLocationRequestOrigin, true, true);
+            } else {
+                Toast.makeText(this, "Location permission denied", Toast.LENGTH_LONG).show();
+                mGeoLocationCallback.invoke(mGeoLocationRequestOrigin, false, true);
+            }
+        }
     }
 }
