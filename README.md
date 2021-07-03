@@ -199,8 +199,21 @@
        }
    }
   ```
-  NOTE: For more information on how to handle permission in real app, Look at Permissions and MainActivity class.
+  NOTE: For more information on how to handle permission in real app, Look at [Permissions](https://github.com/mohodroid/web-app-sample/blob/main/app/src/main/java/com/mohdroid/webapplication/Permissions.kt) and [MainActivity](https://github.com/mohodroid/web-app-sample/blob/main/app/src/main/java/com/mohdroid/webapplication/MainActivity.java) class.
   
   For any request to the Geolocation API should override corresponding onGeolocationPermissionsShowPrompt() method in WebChromeClient.
+  ```
+    @Override
+    public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+        Log.d(TAG, "onGeolocationPermissionsShowPrompt()");
+        callback.invoke(origin, true, false);
+        //get Permission
+        Permissions permissions = new Permissions(MainActivity.this);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            permissions.readGeoLocationPermission();
+            callback.invoke(origin, true, true);
+        }
+    } 
+  ```
    
   
