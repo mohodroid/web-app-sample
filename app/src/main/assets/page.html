@@ -11,58 +11,56 @@
         <style>
         #container {
             margin: 0px auto;
-            width: 500px;
-            height: 375px;
+            width: 250px;
+            height: 150px;
             border: 10px #333 solid;
         }
 
         #videoElement {
-            width: 500px;
-            height: 375px;
+            width: 250px;
+            height: 150px;
             background-color: #666;
         }
     </style>
     </head>
     <body>
         <button type="button" onClick="window.MyWebInterface.showToast('hello from html')" >Js Call Java</button>
-    </body>
-    <body>
-    <button onclick="fetchLocation()">Get location</button>
-    <script>
-        var tipsEle = document.getElementById('tips')
-        function fetchLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(onGeoSuccess, onGeoError)
-            } else {
-                alert('Current devices do not support positioning!')
+        <button onclick="fetchLocation()">Get location</button>
+        <button onclick="window.MyWebInterface.showJazzRadio()">jazzRadio</button>
+        <script>
+            var tipsEle = document.getElementById('tips')
+            function fetchLocation() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(onGeoSuccess, onGeoError)
+                } else {
+                    alert('Current devices do not support positioning!')
+                }
             }
-        }
-        function onGeoSuccess(event){
-            alert("Success: " + event.coords.latitude + ", " + event.coords.longitude)
-        }
-        function onGeoError(event){
-            alert("Error code " + event.code + ". " + event.message)
-        }
-    </script>
-    <div id="container">
-        <video id="videoElement">
-
-        </video>
-    </div>
-    <script>
-        var constraints = { video: { width: 800, height: 800 } };
-        navigator.mediaDevices.getUserMedia(constraints)
-        .then(function(mediaStream) {
-          var video = document.querySelector('video');
-          video.srcObject = mediaStream;
-<!--          video.addEventListener("click", function() {-->
-<!--            video.play();-->
-<!--          });-->
-          video.onloadedmetadata = function(e) {
-             video.play();
-            };
-        })
-        .catch(function(err) { console.log(err.name + ": " + err.message); });
-    </script>
+            function onGeoSuccess(event){
+                alert("Success: " + event.coords.latitude + ", " + event.coords.longitude)
+            }
+            function onGeoError(event){
+                alert("Error code " + event.code + ". " + event.message)
+            }
+        </script>
+        <div id="container">
+            <video id="videoElement">
+            </video>
+        </div>
+        <script>
+            var constraints = { video: { width: 20, height: 20 } };
+            navigator.mediaDevices.getUserMedia(constraints)
+            .then(function(mediaStream) {
+              var video = document.querySelector('video');
+              video.srcObject = mediaStream;
+    <!--          video.addEventListener("click", function() {-->
+    <!--            video.play();-->
+    <!--          });-->
+              video.onloadedmetadata = function(e) {
+                 video.play();
+                };
+            })
+            .catch(function(err) { console.log(err.name + ": " + err.message); });
+        </script>
     </body>
 </html> 

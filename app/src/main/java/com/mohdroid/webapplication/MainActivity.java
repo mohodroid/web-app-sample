@@ -25,7 +25,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.webkit.WebViewCompat;
 import androidx.webkit.WebViewFeature;
 
-import io.sentry.Sentry;
 
 import static com.mohdroid.webapplication.Permissions.PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION;
 import static com.mohdroid.webapplication.Permissions.PERMISSIONS_REQUEST_CAMERA;
@@ -35,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
     WebView webView;
     private boolean safeBrowsingIsInitialized;
 
-    static final String TAG = "WebApp";
+     static final String TAG = "WebApp";
     final String DEFAULT_URL = "file:///android_asset/page.html";
      String mGeoLocationRequestOrigin = null;
     GeolocationPermissions.Callback mGeoLocationCallback = null;
@@ -45,19 +44,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Intent intent = getIntent();
-        String action = intent.getAction();
-        Uri data = intent.getData();
-        String url;
-        if (data != null) {
-            Log.d(TAG, data.toString());
-            if (data.getHost().equals("popular")) url = "https://www.jazzradio.com";
-            else if (data.getHost().equals("apps")) url = "https://www.jazzradio.com/apps";
-            else url = DEFAULT_URL;
-        } else url = DEFAULT_URL;
+
         PackageInfo webViewPackageInfo = WebViewCompat.getCurrentWebViewPackage(this);
         Log.d(TAG, "WebView version: " + webViewPackageInfo.versionName);
-//        webView = new WebView(this);
         /*
             The renderer's priority is the same as (or "is bound to") the default priority for the app.
             The true argument decreases the renderer's priority to RENDERER_PRIORITY_WAIVED when the associated WebView object is no longer visible
@@ -94,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
           its better wait until safeBrowsingIsInitialized = true before loading url
           TODO("refactor to check safe browsing before load url")
          */
-        webView.loadUrl(url);
+        webView.loadUrl(DEFAULT_URL);
 
         /*
             JS code is disabled by default in webView
@@ -109,6 +98,9 @@ public class MainActivity extends AppCompatActivity {
             settings.setSafeBrowsingEnabled(true);
         }
         webView.setWebChromeClient(new android.webkit.WebChromeClient() {
+
+
+
             @Override
             public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
                 Log.d(TAG, "onGeolocationPermissionsShowPrompt()");
@@ -169,47 +161,6 @@ public class MainActivity extends AppCompatActivity {
          */
         webView.addJavascriptInterface(new MyWebInterface(this), "MyWebInterface");
 
-    }
-
-
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        // Check if the key event was the Back button and if there's history
-        if ((keyCode == KeyEvent.KEYCODE_BACK) && webView.canGoBack()) {
-            webView.goBack();
-            return true;
-        }
-        // If it wasn't the Back key or there's no web page history, bubble up to the default
-        // system behavior (probably exit the activity)
-        return super.onKeyDown(keyCode, event);
-    }
-
-    private void loadHtml(WebView webView) {
-        // Create an unencoded HTML string
-        // then convert the unencoded HTML string into bytes, encode
-        // it with Base64, and load the data.
-        String unencodedHtml =
-                "<html><body>'%23' is the percent code for ‘#‘ </body></html>";
-        String encodedHtml = Base64.encodeToString(unencodedHtml.getBytes(),
-                Base64.NO_PADDING);
-        webView.loadData(encodedHtml, "text/html", "base64");
-    }
-
-    private void hideSystemUI() {
-        // Enables regular immersive mode.
-        // For "lean back" mode, remove SYSTEM_UI_FLAG_IMMERSIVE.
-        // Or for "sticky immersive," replace it with SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-        View decorView = getWindow().getDecorView();
-        decorView.setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_IMMERSIVE
-                        // Set the content to appear under the system bars so that the
-                        // content doesn't resize when the system bars hide and show.
-                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        // Hide the nav bar and status bar
-
-                        | View.SYSTEM_UI_FLAG_FULLSCREEN);
     }
 
     public void onclick(View view) {
