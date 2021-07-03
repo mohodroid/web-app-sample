@@ -151,18 +151,50 @@
   ```
     adb shell am start -W -a android.intent.action.VIEW -d "app://popular"
   ```  
-
-
+  ## Permissions 
+  ### web content can requesting permission to access the specified resources.
+  to notify the host application to access permission from web page should override onPermissionRequest(PermissionRequest request) in WebChromeClient. 
+  when js ask to access any permission this method call in host application, if don't override means deny access.
   
+  Example code to access camera form web page
+  JavaScript code:
+  ```
+    <div id="container">
+        <video id="videoElement"></video>
+    </div>
+    <script>
+        var constraints = { video: { width: 20, height: 20 } };
+        navigator.mediaDevices.getUserMedia(constraints)
+        .then(function(mediaStream) {
+          var video = document.querySelector('video');
+          video.srcObject = mediaStream;
+          video.onloadedmetadata = function(e) {
+             video.play();
+            };
+        })
+        .catch(function(err) { console.log(err.name + ": " + err.message); });
+    </script>
+
+  ``` 
+  Android code:
+  ```
+   @Override
+   public void onPermissionRequest(PermissionRequest request) {
+       Log.d(TAG, "onPermissionRequest()");
+       //get Permission
+       Permissions permissions = new Permissions(MainActivity.this);
+       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+           int i = permissions.readCameraPermission();
+           if (i == 1) means access permission
+               request.grant(request.getResources());
+           else {
+               request.deny()
+           }
+       }
+   }
+  ```
+  NOTE: For more information on how to handle permission in real app, Look at Permissions and MainActivity class.
   
-
-The general syntax for testing an intent filter URI with adb is:
-
-adb shell am start
-        -W -a android.intent.action.VIEW
-        -d <URI> <PACKAGE>
-for example: 
-
-adb shell am start -W -a android.intent.action.VIEW -d "app://apps"      --> open MainActivity and load https://www.jazzradio.com/apps url
-
-adb shell am start -W -a android.intent.action.VIEW -d "app://popular"   --> open MainActivity and load https://www.jazzradio.com/#popular url
+  For any request to the Geolocation API should override corresponding onGeolocationPermissionsShowPrompt() method in WebChromeClient.
+   
+  
