@@ -1,5 +1,145 @@
-# web-app-sample
+  # web-app-sample
 
+  ## Adding a WebView to your app
+  To add a WebView to your app, you can include the <WebView> element in your activity layout
+  ```
+    <WebView
+      android:id="@+id/webview"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+    />
+
+  ```
+  Then load the page with:
+  ```
+    myWebView.loadUrl("https://www.example.com");
+
+  ```
+  Before this works, app need access to the internet:
+  ```
+  <manifest ... >
+    <uses-permission android:name="android.permission.INTERNET" />
+    ...
+  </manifest>
+  
+  ```
+  ## Binding JavaScript code to Android code
+  
+  ### Call JavaScript code from Android
+  Fist: enable JavaScript for your WebView
+  ```
+  WebView myWebView = (WebView) findViewById(R.id.webview);
+  WebSettings webSettings = myWebView.getSettings();
+  webSettings.setJavaScriptEnabled(true);
+  
+  ```
+  Second: Create a class in Android app
+  ```
+  public class MyWebInterface {
+    private final Context context;
+
+    MyWebInterface(Context context) {
+        this.context = context;
+    }
+
+    /**
+     * Show a toast from the web page
+     */
+    @JavascriptInterface
+    public void showToast(String message) {
+        Toast.makeText(context, "Message from js" + message, Toast.LENGTH_SHORT).show();
+    }
+  }
+  
+  ```
+  Third: Bind this class to the JavaScript, this will create interface for js in webView and js has access to it
+  ```
+  webView.addJavascriptInterface(new MyWebInterface(this), "MyWebInterface");
+  
+  ```
+  and then call from js and html:
+  ```
+  <button type="button" onClick="window.MyWebInterface.showToast('hello from html')" >Js Call Java</button>
+  
+  ```
+  
+  ### Call JavaScript from Android 
+  
+  First: write a function in JavaScript
+  
+  ```
+   <script type="text/javascript">
+       function javaCallJs(message){
+           alert(message);
+       }
+   </script>
+  
+  ```
+  
+  Second: Call from Android
+  
+  ```
+   public void onclick(View view) {
+        webView.loadUrl("javascript:javaCallJs(" + "'Message From Java'" + ")");
+    }
+  
+  ```
+  Note: The object that is bound to your JavaScript runs in another thread and not in the thread in which it was constructed
+  
+  ## Handling page navigation
+  Full control over links user click.
+  when override this, webView automatically accumulates a history of visited web pages.
+  ```
+   class MyWebViewClient extends WebViewClientCompat {
+
+    private final Context context;
+
+    MyWebViewClient(Context context) {
+        this.context = context;
+    }
+
+    @Override
+    public boolean shouldOverrideUrlLoading(@NonNull WebView view, WebResourceRequest request) {
+        Log.d(MainActivity.TAG, request.getUrl().toString());
+        if ("www.jazzradio.com".equals(request.getUrl().getHost())) {
+            // This is my website, so do not override; let my WebView load the page
+            return false;
+        }
+        // Otherwise, the link is not for a page on my site, so launch another Activity that handles URLs
+        Intent intent = new Intent(Intent.ACTION_VIEW, request.getUrl());
+        String title = "open page with";
+        Intent chooser = Intent.createChooser(intent, title);
+        if (intent.resolveActivity(context.getPackageManager()) != null) {
+            context.startActivity(chooser);
+        }
+        return true;
+    }
+  }
+  
+  ```
+  and then add an instance of this new WebViewClient for the WebView
+  ```
+    webView.setWebViewClient(new MyWebViewClient(this));
+  ```
+  navigate backward and forward through the history with goBack() and goForward()
+  ```
+     @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        // Check if the key event was the Back button and if there's history
+        if ((keyCode == KeyEvent.KEYCODE_BACK) && webView.canGoBack()) {
+            webView.goBack();
+            return true;
+        }
+        // If it wasn't the Back key or there's no web page history, bubble up to the default
+        // system behavior (probably exit the activity)
+        return super.onKeyDown(keyCode, event);
+    }
+  
+  ```
+  NOTE: Be aware of handling configuration changes that destory and creates new WebView object, means loast your state in webView
+  
+  
+  
 
 The general syntax for testing an intent filter URI with adb is:
 
