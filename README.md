@@ -139,6 +139,12 @@
   NOTE: Be aware of handling configuration changes that destory and creates new WebView object, means loast your state in webView
   
   ## DeepLink
+  With deeplink can open app with an intent filter declared in manifest file.
+  in Activity getting data and decide which page open
+  NOTE: Android offer App link that is base on the domain for web
+    Work in Android 6 or later
+    No dialog to choose between app and browser
+      
   The general syntax for testing an intent filter URI with adb is:
   ```
     adb shell am start -W -a android.intent.action.VIEW -d       
