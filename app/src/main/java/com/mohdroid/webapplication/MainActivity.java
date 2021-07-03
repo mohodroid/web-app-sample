@@ -15,6 +15,8 @@ import android.webkit.ConsoleMessage;
 import android.webkit.GeolocationPermissions;
 import android.webkit.PermissionRequest;
 import android.webkit.ValueCallback;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.Toast;
@@ -22,6 +24,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.webkit.WebViewAssetLoader;
+import androidx.webkit.WebViewClientCompat;
 import androidx.webkit.WebViewCompat;
 import androidx.webkit.WebViewFeature;
 
@@ -32,11 +36,9 @@ import static com.mohdroid.webapplication.Permissions.PERMISSIONS_REQUEST_CAMERA
 public class MainActivity extends AppCompatActivity {
 
     WebView webView;
-    private boolean safeBrowsingIsInitialized;
-
-     static final String TAG = "WebApp";
-    final String DEFAULT_URL = "file:///android_asset/page.html";
-     String mGeoLocationRequestOrigin = null;
+    static final String TAG = "WebApp";
+    final String DEFAULT_URL = "https://appassets.androidplatform.net/assets/index.html";
+    String mGeoLocationRequestOrigin = null;
     GeolocationPermissions.Callback mGeoLocationCallback = null;
     private PermissionRequest mRequest;
 
@@ -44,45 +46,16 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         PackageInfo webViewPackageInfo = WebViewCompat.getCurrentWebViewPackage(this);
-        Log.d(TAG, "WebView version: " + webViewPackageInfo.versionName);
-        /*
-            The renderer's priority is the same as (or "is bound to") the default priority for the app.
-            The true argument decreases the renderer's priority to RENDERER_PRIORITY_WAIVED when the associated WebView object is no longer visible
-            In other words, a true argument indicates that your app doesn't care whether the system keeps the renderer process alive.
-            In fact, this lower priority level makes it likely that the renderer process is killed in out-of-memory situations.
-         */
+        Log.d(TAG, "WebView version: " + (webViewPackageInfo != null ? webViewPackageInfo.versionName : null));
         setContentView(R.layout.activity_main);
         webView = findViewById(R.id.webView);
 //        Button button = findViewById(R.id.btnJavaCallJs);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            webView.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_BOUND, true);
-        }
-
-        /*
-            Full control over links user click.
-            when override this, webView automatically accumulates a history of visited web pages.
-         */
-        webView.setWebViewClient(new MyWebViewClient(this));
-        safeBrowsingIsInitialized = false;
-        if (WebViewFeature.isFeatureSupported(WebViewFeature.START_SAFE_BROWSING)) {
-            WebViewCompat.startSafeBrowsing(this, new ValueCallback<Boolean>() {
-                @Override
-                public void onReceiveValue(Boolean success) {
-                    //when safe browsing init correctly success= true else false
-                    safeBrowsingIsInitialized = true;
-                    if (!success) {
-                        Log.d(TAG, "Unable to initialize Safe Browsing!");
-                    }
-                }
-            });
-        }
-        /*
-          Load the page with:
-          its better wait until safeBrowsingIsInitialized = true before loading url
-          TODO("refactor to check safe browsing before load url")
-         */
+        final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
+                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+                .addPathHandler("/res/", new WebViewAssetLoader.ResourcesPathHandler(this))
+                .build();
+        webView.setWebViewClient(new LocalContentWebViewClient(assetLoader));
         webView.loadUrl(DEFAULT_URL);
 
         /*
@@ -98,9 +71,6 @@ public class MainActivity extends AppCompatActivity {
             settings.setSafeBrowsingEnabled(true);
         }
         webView.setWebChromeClient(new android.webkit.WebChromeClient() {
-
-
-
             @Override
             public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
                 Log.d(TAG, "onGeolocationPermissionsShowPrompt()");
@@ -134,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
 
 
             }
+
             @RequiresApi(api = Build.VERSION_CODES.M)
             @Override
             public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
@@ -148,7 +119,6 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-//        settings.setSupportMultipleWindows(true);
 
         /*
             This will create an interface called Android for js running in the webView
@@ -186,6 +156,29 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "Location permission denied", Toast.LENGTH_LONG).show();
                 mGeoLocationCallback.invoke(mGeoLocationRequestOrigin, false, true);
             }
+        }
+    }
+
+    private static class LocalContentWebViewClient extends WebViewClientCompat {
+
+        private final WebViewAssetLoader mAssetLoader;
+
+        LocalContentWebViewClient(WebViewAssetLoader assetLoader) {
+            mAssetLoader = assetLoader;
+        }
+
+        @Override
+        @RequiresApi(21)
+        public WebResourceResponse shouldInterceptRequest(WebView view,
+                                                          WebResourceRequest request) {
+            return mAssetLoader.shouldInterceptRequest(request.getUrl());
+        }
+
+        @Override
+        @SuppressWarnings("deprecation") // to support API < 21
+        public WebResourceResponse shouldInterceptRequest(WebView view,
+                                                          String url) {
+            return mAssetLoader.shouldInterceptRequest(Uri.parse(url));
         }
     }
 }

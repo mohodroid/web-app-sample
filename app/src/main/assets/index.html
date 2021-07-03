@@ -1,5 +1,6 @@
 <html>  
-    <head>  
+    <head>
+        <link rel="stylesheet" href="/assets/stylesheet.css">
         <meta http-equiv="Content-Type"  content="text/html;charset=UTF-8">
         <script type="text/javascript">
             function javaCallJs(message){
@@ -24,6 +25,8 @@
     </style>
     </head>
     <body>
+        <p>This file was loaded from in-app content</p>
+        <p><img src="/res/drawable/android_robot.png" alt="Android robot" width="100"></p>
         <button type="button" onClick="window.MyWebInterface.showToast('hello from html')" >Js Call Java</button>
         <button onclick="fetchLocation()">Get location</button>
         <button onclick="window.MyWebInterface.showJazzRadio()">jazzRadio</button>
