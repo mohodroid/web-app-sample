@@ -56,7 +56,7 @@
             android:value="true" />
         <meta-data
             android:name="android.webkit.WebView.MetricsOptOut"
-            android:value="false" />
+            android:value="true" />
     </application>
 
 </manifest>
