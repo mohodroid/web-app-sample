@@ -1,4 +1,17 @@
-  # web-app-sample
+  # WebView Demo
+  
+  This sample will demonstrate best practices around the useage of the [AndroidX WebKit API](https://developer.android.com/guide/webapps/webview), solve main scenarios
+  and challenges of hosting web pages in Android Application.
+  
+  In [MainActivity](https://github.com/mohodroid/web-app-sample/blob/main/app/src/main/java/com/mohdroid/webapplication/MainActivity.java) load in-app content using              [WebViewAssetLoader](https://developer.android.com/reference/androidx/webkit/WebViewAssetLoader) without access or consume bandwidth.
+  
+  In [DisplayWebActivity](https://github.com/mohodroid/web-app-sample/blob/main/app/src/main/java/com/mohdroid/webapplication/DisplayWebActivity.java) load and fetch [web page](https://www.jazzradio.com/#popular)
+  
+  ## Pre-requisites
+  Android SDK 29
+  
+  ## Getting Started
+  This sample uses the Gradle build system. To build this project, use the "gradlew build" command or use "Import Project" in Android Studio.
 
   ## Adding a WebView to your app
   To add a WebView to your app, you can include the <WebView> element in your activity layout
