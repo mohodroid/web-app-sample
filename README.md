@@ -3,10 +3,14 @@
   This sample will demonstrate best practices around the useage of the [AndroidX WebKit API](https://developer.android.com/guide/webapps/webview), solve main scenarios
   and challenges of hosting web pages in Android Application.
   
-  In [MainActivity](https://github.com/mohodroid/web-app-sample/blob/main/app/src/main/java/com/mohdroid/webapplication/MainActivity.java) load in-app content using              [WebViewAssetLoader](https://developer.android.com/reference/androidx/webkit/WebViewAssetLoader) without access or consume bandwidth.
+  In [MainActivity](https://github.com/mohodroid/web-app-sample/blob/main/app/src/main/java/com/mohdroid/webapplication/MainActivity.java) load in-app content using   [WebViewAssetLoader](https://developer.android.com/reference/androidx/webkit/WebViewAssetLoader) without access or consume bandwidth.
+  
+  ![alt text](https://github.com/mohodroid/web-app-sample/blob/main/screenshots/Screenshot_20210704-153323_Web%20Application.jpg)
   
   In [DisplayWebActivity](https://github.com/mohodroid/web-app-sample/blob/main/app/src/main/java/com/mohdroid/webapplication/DisplayWebActivity.java) load and fetch [web page](https://www.jazzradio.com/#popular)
   
+  ![alt text](https://github.com/mohodroid/web-app-sample/blob/main/screenshots/Screenshot_20210704-153703_Web%20Application.jpg)
+ 
   ## Pre-requisites
   Android SDK 29
   
