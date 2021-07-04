@@ -151,6 +151,7 @@ public class MainActivity extends AppCompatActivity {
             if (grantResults.length != 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, "Location permission granted", Toast.LENGTH_LONG).show();
                 mGeoLocationCallback.invoke(mGeoLocationRequestOrigin, true, true);
+                webView.loadUrl("javascript:fetchLocation()");
             } else {
                 Toast.makeText(this, "Location permission denied", Toast.LENGTH_LONG).show();
                 mGeoLocationCallback.invoke(mGeoLocationRequestOrigin, false, true);
