@@ -1,9 +1,26 @@
 plugins {
     id 'com.android.application'
+    id "io.sentry.android.gradle"
 }
 apply plugin: 'kotlin-android'
 
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+def sentryDsn = properties.getProperty('sentry_dsn')
+def storePass = properties.getProperty('store_password')
+def keyPass = properties.getProperty('key_password')
+def keyName = properties.getProperty('key_name')
+def location = properties.getProperty('location')
+
 android {
+    signingConfigs {
+        release {
+            storeFile file(location)
+            storePassword storePass
+            keyAlias keyName
+            keyPassword keyPass
+        }
+    }
     compileSdkVersion 29
     buildToolsVersion "29.0.3"
 
@@ -11,21 +28,45 @@ android {
         applicationId "com.mohdroid.webapplication"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 1
-        versionName "1.0"
+        versionCode 17
+        versionName "17.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        signingConfig signingConfigs.release
+        multiDexEnabled true
+        manifestPlaceholders = [sentryDsn: sentryDsn]
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            debuggable true
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            multiDexKeepProguard file('multidex-config.pro')
         }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+    }
+    sentry {
+        // Enables or disables the automatic upload of mapping files
+        // during a build.  If you disable this, you'll need to manually
+        // upload the mapping files with sentry-cli when you do a release.
+        autoUpload = true
+
+        // Disables or enables the automatic configuration of Native Symbols
+        // for Sentry. This executes sentry-cli automatically so
+        // you don't need to do it manually.
+        // Default is disabled.
+        uploadNativeSymbols = true
+
+        // Does or doesn't include the source code of native code for Sentry.
+        // This executes sentry-cli with the --include-sources param. automatically so
+        // you don't need to do it manually.
+        // Default is disabled.
+        includeNativeSources = true
     }
 }
 
@@ -39,6 +80,8 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
+    implementation 'io.sentry:sentry-android:5.0.1'
 }
 repositories {
     mavenCentral()

@@ -1,20 +1,16 @@
 package com.mohdroid.webapplication;
 
-import android.annotation.SuppressLint;
-import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Base64;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.webkit.ConsoleMessage;
 import android.webkit.GeolocationPermissions;
 import android.webkit.PermissionRequest;
-import android.webkit.ValueCallback;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
@@ -27,22 +23,23 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.webkit.WebViewAssetLoader;
 import androidx.webkit.WebViewClientCompat;
 import androidx.webkit.WebViewCompat;
-import androidx.webkit.WebViewFeature;
 
+import io.sentry.Breadcrumb;
+import io.sentry.Sentry;
+import io.sentry.SentryLevel;
 
 import static com.mohdroid.webapplication.Permissions.PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION;
 import static com.mohdroid.webapplication.Permissions.PERMISSIONS_REQUEST_CAMERA;
 
 public class MainActivity extends AppCompatActivity {
 
-    WebView webView;
+    private WebView webView;
     static final String TAG = "WebApp";
     final String DEFAULT_URL = "https://appassets.androidplatform.net/assets/index.html";
-    String mGeoLocationRequestOrigin = null;
-    GeolocationPermissions.Callback mGeoLocationCallback = null;
+    private String mGeoLocationRequestOrigin = null;
+    private GeolocationPermissions.Callback mGeoLocationCallback = null;
     private PermissionRequest mRequest;
 
-    @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -114,7 +111,10 @@ public class MainActivity extends AppCompatActivity {
             public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
                 String message = consoleMessage.message() + " -- From line " +
                         consoleMessage.lineNumber() + " of " + consoleMessage.sourceId();
-                Log.d(TAG, message);
+                log(consoleMessage.messageLevel(), message);
+                SentryLevel sentryLevel = convertToSentry(consoleMessage.messageLevel());
+                if (sentryLevel != null)
+                    Sentry.captureMessage(message, sentryLevel);
                 return true;
             }
         });
@@ -130,6 +130,42 @@ public class MainActivity extends AppCompatActivity {
          */
         webView.addJavascriptInterface(new MyWebInterface(this), "MyWebInterface");
 
+    }
+
+    private SentryLevel convertToSentry(ConsoleMessage.MessageLevel messageLevel) {
+        SentryLevel sentryLevel;
+        switch (messageLevel) {
+            case DEBUG:
+                sentryLevel = SentryLevel.DEBUG;
+                break;
+            case ERROR:
+                sentryLevel = SentryLevel.ERROR;
+                break;
+            case WARNING:
+                sentryLevel = SentryLevel.WARNING;
+                break;
+            default:
+                sentryLevel = null;
+                break;
+        }
+        return sentryLevel;
+    }
+
+    private void log(ConsoleMessage.MessageLevel messageLevel, String message) {
+        switch (messageLevel) {
+            case DEBUG:
+                Log.d(TAG, message);
+                break;
+            case ERROR:
+                Log.e(TAG, message);
+                break;
+            case WARNING:
+                Log.w(TAG, message);
+                break;
+            default:
+                Log.i(TAG, message);
+                break;
+        }
     }
 
     public void onclick(View view) {

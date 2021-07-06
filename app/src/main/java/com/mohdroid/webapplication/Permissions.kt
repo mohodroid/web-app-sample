@@ -3,7 +3,6 @@ package com.mohdroid.webapplication
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
-import android.webkit.GeolocationPermissions
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -11,7 +10,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityCompat.requestPermissions
 import androidx.core.content.ContextCompat
 
- class Permissions(private val context: AppCompatActivity) {
+class Permissions(private val context: AppCompatActivity) {
 
     companion object {
         const val PERMISSION_REQUEST_USER_ACCESS_TO_THE_ACCOUNT = 0
